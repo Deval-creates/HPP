@@ -16,4 +16,4 @@ __pycache__/
 .env
 
 # Model
-ML_Model/*.pkl
+*.pkl
