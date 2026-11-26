@@ -15,3 +15,5 @@ __pycache__/
 # Environment variables
 .env
 
+# Model
+ML_Model/*.pkl
