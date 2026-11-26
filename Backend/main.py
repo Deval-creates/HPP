@@ -14,6 +14,8 @@ from schemas import UserCreate, FavoriteCreate, FavoriteResponse
 from auth import hash_password, verify_password, create_access_token, get_current_user
 from fastapi import Depends
 from typing import List
+import os
+from huggingface_hub import hf_hub_download
 
 app = FastAPI()
 app.add_middleware(
@@ -25,7 +27,8 @@ app.add_middleware(
 )
 
 # Load the trained model
-model = joblib.load("../ML_Model/house_model.pkl")
+model_path = hf_hub_download(repo_id="Saksham63/house-price-model", filename="house_model.pkl")
+model = joblib.load(model_path)
 @app.on_event("startup")
 def startup():
     models.Base.metadata.create_all(bind=engine)
