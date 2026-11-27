@@ -1,54 +1,27 @@
-const BASE_URL = "http://127.0.0.1:8000";
 
-export const signupUser = async (email, password) => {
-    const res = await fetch(`${BASE_URL}/signup`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-    });
 
-    const data = await res.json();
+
+const API_BASE_URL = 'https://house-price-backend-lzi6.onrender.com'; 
+
+export const signupUser = async (fullName, email, password) => {
+  const response = await fetch(`${API_BASE_URL}/signup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
     
-    if (res.ok && data.token) {
-        // Store token and user_id in localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user_id", data.user_id);
-    }
-    
-    return data;
-};
+    body: JSON.stringify({ 
+      full_name: fullName, 
+      email: email, 
+      password: password 
+    }), 
+  });
 
-export const loginUser = async (email, password) => {
-    const res = await fetch(`${BASE_URL}/login`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-    
-    if (res.ok && data.token) {
-        // Store token and user_id in localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user_id", data.user_id);
-    }
-    
-    return data;
-};
-
-export const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user_id");
-};
-
-export const isAuthenticated = () => {
-    return !!localStorage.getItem("token");
-};
-
-export const getAuthToken = () => {
-    return localStorage.getItem("token");
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.detail || 'Signup failed');
+  }
+  
+  return data;
 };

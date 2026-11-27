@@ -25,7 +25,7 @@ const SignUpForm = ({ onClose, onSwitchToLogin, onSignUpSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ password check
+    // 1. Password check
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match!');
       return;
@@ -39,10 +39,17 @@ const SignUpForm = ({ onClose, onSwitchToLogin, onSignUpSuccess }) => {
     setLoading(true);
 
     try {
-      const data = await signupUser(formData.email, formData.password);
+      // 2. API Call 
+      const data = await signupUser(formData.fullName, formData.email, formData.password);
 
+      // 3. Success Logic & Local Storage
       if (data.message && data.token) {
         toast.success('Account created successfully! Welcome aboard 🎉');
+        
+        
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userEmail', formData.email); 
+        localStorage.setItem('userName', formData.fullName);
 
         // Call success callback to update navbar
         if (onSignUpSuccess) {
@@ -64,6 +71,7 @@ const SignUpForm = ({ onClose, onSwitchToLogin, onSignUpSuccess }) => {
       setLoading(false);
     }
   };
+
   const handleLoginClick = (e) => {
     e.preventDefault();
     onClose();

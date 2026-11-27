@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class UserCreate(BaseModel):
+    full_name: Optional[str] = None  # Added full_name field
     email: str
     password: str
 

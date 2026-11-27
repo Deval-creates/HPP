@@ -1,5 +1,4 @@
-from fastapi import FastAPI, HTTPException
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import joblib
@@ -12,25 +11,28 @@ from database import SessionLocal, engine
 import models
 from schemas import UserCreate, FavoriteCreate, FavoriteResponse
 from auth import hash_password, verify_password, create_access_token, get_current_user
-from fastapi import Depends
 from typing import List
 import os
 from huggingface_hub import hf_hub_download
 
 app = FastAPI()
+
+# CORS configuration to allow requests from any origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # allow all (for development)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load the trained model
+# Load the trained model from Hugging Face
 model_path = hf_hub_download(repo_id="Saksham63/house-price-model", filename="house_model.pkl")
 model = joblib.load(model_path)
+
 @app.on_event("startup")
 def startup():
+    # Create database tables if they don't exist
     models.Base.metadata.create_all(bind=engine)
 
 def get_db():
@@ -43,6 +45,7 @@ def get_db():
 @app.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     try:
+        # Check if user already exists
         existing = db.query(models.User).filter(models.User.email == user.email).first()
         
         if existing:
@@ -50,7 +53,12 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
         hashed = hash_password(user.password)
 
-        new_user = models.User(email=user.email, password=hashed)
+        # Create new user with full_name
+        new_user = models.User(
+            full_name=user.full_name, 
+            email=user.email, 
+            password=hashed
+        )
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
@@ -84,7 +92,6 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
         "user_id": db_user.id,
         "token": token
     }
-
 
 # New Favourites Endpoints
 @app.post("/favourites", response_model=dict)
@@ -166,7 +173,6 @@ def check_favourite(
     
     return {"is_favourite": favourite is not None}
 
-
 # Initialize geocoder
 geolocator = Nominatim(user_agent="house_price_predictor")
 
@@ -220,11 +226,6 @@ def predict(data: PredictionInput):
         ocean_encoded = ocean_proximity_mapping.get(data.ocean_proximity, [0, 0, 0, 0, 1])
 
         # Create feature array matching the model's expected input
-        # Order: longitude, latitude, housing_median_age, total_rooms, total_bedrooms, 
-        #        population, households, median_income, 
-        #        ocean_proximity_<1H OCEAN, ocean_proximity_INLAND, ocean_proximity_ISLAND,
-        #        ocean_proximity_NEAR BAY, ocean_proximity_NEAR OCEAN,
-        #        rooms_per_household, bedrooms_per_room, population_per_household
         features = np.array([[
             longitude,
             latitude,
